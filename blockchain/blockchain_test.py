@@ -2,6 +2,12 @@ from flask import Flask, render_template, jsonify, request
 from time import time
 from flask_cors import CORS
 from collections import OrderedDict
+import binascii
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
+from Crypto.Hash import SHA
+
+MINING_SENDER = ''
 
 
 class Blockchain:
@@ -24,25 +30,38 @@ class Blockchain:
         self.transactions = []
         self.chain.append(block)
 
+    def verify_transaction_signature(self, sender_public_key, signature, transaction):
+        public_key = RSA.importKey(binascii.unhexlify(sender_public_key))
+        verifier = PKCS1_v1_5.new(public_key)
+        h = SHA.new(str(transaction).encode('utf8'))
+
+        try:
+            verifier.verify(h, binascii.unhexlify(signature))
+            return True
+        except ValueError:
+            return False
+
     def submit_transaction(self, sender_public_key, recipient_public_key, signature, amount):
         # TODO: Reward the miner
-        # TODO: Signature validation
 
         transaction = OrderedDict({
             'sender_public_key': sender_public_key,
             'recipient_public_key': recipient_public_key,
-            'signature': signature,
             'amount': amount,
         })
 
-        signature_verification = True
-        if signature_verification:
+        # Reward for mining a block
+        if sender_public_key == "MINING_SENDER":
             self.transactions.append(transaction)
             return len(self.chain) + 1
         else:
-            return False
-
-
+            # Transaction from wallet to another wallet
+            signature_verification = self.verify_transaction_signature(sender_public_key, signature, transaction)
+            if signature_verification:
+                self.transactions.append(transaction)
+                return len(self.chain) + 1
+            else:
+                return False
 
 
 # Instantiate the blockchain
@@ -61,9 +80,14 @@ def index():
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
     values = request.form
+    required = ['confirmation_sender_public_key', 'confirmation_recipient_public_key', 'transaction_signature',
+                'confirmation_amount']
+    if not all(k in values for k in required):
+        return 'Missing values', 400
 
-    # Check required field
-    transaction_results = blockchain.submit_transaction(values['confirmation_sender_public_key'], values['confirmation_recipient_public_key'], values['transaction_signature'], values['confirmation_amount'])
+    transaction_results = blockchain.submit_transaction(values['confirmation_sender_public_key'],
+                                                        values['confirmation_recipient_public_key'],
+                                                        values['transaction_signature'], values['confirmation_amount'])
 
     if not transaction_results:
         response = {'message': 'Invalid transaction/signature'}
