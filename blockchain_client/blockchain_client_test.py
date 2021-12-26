@@ -6,6 +6,7 @@ import binascii
 from collections import OrderedDict
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA
+from flask_cors import CORS
 
 
 class Transaction:
@@ -31,6 +32,7 @@ class Transaction:
 
 
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route('/')
