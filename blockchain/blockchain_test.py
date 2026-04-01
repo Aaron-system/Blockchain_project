@@ -277,8 +277,8 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
-    parser.add_argument('-p', '--port', default=5001, type=int, help='port to listen to')
+    parser.add_argument('-p', '--port', default=5001, type=int, help='port to listen on')
+    parser.add_argument('-H', '--host', default='127.0.0.1', help='host to bind (use 0.0.0.0 for Docker)')
     args = parser.parse_args()
-    port = args.port
 
-    app.run(host='127.0.0.1', port=port, debug=True)
+    app.run(host=args.host, port=args.port, debug=(args.host == '127.0.0.1'))

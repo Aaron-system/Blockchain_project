@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+
+# Local env (production values come from build args)
+.env.local
+.env*.local
+
+# Dev tools
+.git/
+*.md

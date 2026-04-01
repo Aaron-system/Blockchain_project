@@ -1,0 +1,40 @@
+networks:
+  default:
+  proxy-net:
+    external: true
+    name: proxy-net
+
+services:
+
+  # ── Blockchain Node API (Flask) ──────────────────────────────────────────────
+  blockchain-node:
+    build:
+      context: .
+      dockerfile: blockchain/Dockerfile
+    restart: unless-stopped
+    networks:
+      - default
+      - proxy-net
+
+  # ── Wallet Client API (Flask) ────────────────────────────────────────────────
+  blockchain-wallet:
+    build:
+      context: .
+      dockerfile: blockchain_client/Dockerfile
+    restart: unless-stopped
+    networks:
+      - default
+      - proxy-net
+
+  # ── Next.js Frontend ─────────────────────────────────────────────────────────
+  blockchain-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_NODE_URL: https://blockchain-node.aaronk.tech
+        NEXT_PUBLIC_CLIENT_URL: https://blockchain-wallet.aaronk.tech
+    restart: unless-stopped
+    networks:
+      - default
+      - proxy-net
